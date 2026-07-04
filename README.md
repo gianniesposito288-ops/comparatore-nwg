@@ -1,0 +1,1 @@
+# comparatore-nwg
