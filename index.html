@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1B5E20">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>NWG Comparatore</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F0F4F0;color:#212121;min-height:100vh;overflow-x:hidden}
+
+/* PIN SCREEN */
+.pin-screen{position:fixed;inset:0;background:#1B5E20;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}
+.pin-logo{width:64px;height:64px;background:#fff;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+.pin-logo span{font-size:18px;font-weight:800;color:#1B5E20}
+.pin-title{color:#fff;font-size:22px;font-weight:700;margin-bottom:6px;text-align:center}
+.pin-sub{color:rgba(255,255,255,0.7);font-size:14px;margin-bottom:32px;text-align:center}
+.pin-dots{display:flex;gap:16px;margin-bottom:32px}
+.pin-dot{width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,0.3);transition:background 0.15s}
+.pin-dot.filled{background:#fff}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px}
+.pin-btn{height:64px;border-radius:14px;background:rgba(255,255,255,0.15);color:#fff;font-size:24px;font-weight:600;border:none;cursor:pointer;font-family:inherit;transition:background 0.1s}
+.pin-btn:active{background:rgba(255,255,255,0.3)}
+.pin-btn.del{font-size:18px}
+.pin-err{color:#FF8A80;font-size:13px;margin-top:16px;min-height:20px}
+
+.topbar{background:#1B5E20;padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200}
+.logo{width:34px;height:34px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo span{font-size:9px;font-weight:800;color:#1B5E20}
+.t1{color:#fff;font-size:15px;font-weight:700}
+.t2{color:rgba(255,255,255,0.7);font-size:11px}
+.tabs{display:flex;background:#fff;border-bottom:2px solid #E8E8E8;position:sticky;top:58px;z-index:199}
+.tab{flex:1;padding:11px 4px;text-align:center;font-size:12px;font-weight:600;color:#9E9E9E;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;font-family:inherit}
+.tab.active{color:#1B5E20;border-bottom-color:#1B5E20}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.app{max-width:480px;margin:0 auto;padding-bottom:88px}
+.sect{padding:14px 14px 0}
+.slabel{font-size:10px;font-weight:700;color:#9E9E9E;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
+.card{background:#fff;border-radius:14px;padding:15px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:13px;color:#555;margin-bottom:5px;font-weight:600}
+.field input[type=number],.field input[type=text]{width:100%;height:50px;border-radius:10px;border:1.5px solid #DDD;background:#fff;color:#212121;font-size:17px;padding:0 14px;font-family:inherit;transition:border-color 0.15s}
+.field input:focus{outline:none;border-color:#1B5E20;box-shadow:0 0 0 3px rgba(27,94,32,0.1)}
+.hint{font-size:11px;color:#AAA;margin-top:4px;line-height:1.4}
+.tipo-row{display:flex;gap:8px;margin-bottom:12px}
+.tipo-btn{flex:1;height:46px;border-radius:10px;border:1.5px solid #DDD;background:#fff;color:#888;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s}
+.tipo-btn.active{background:#1B5E20;color:#fff;border-color:#1B5E20}
+.fg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px}
+.fg .field{margin-bottom:0}
+.fg label{font-size:12px;font-weight:700;color:#1B5E20!important}
+.fg input{height:46px!important;font-size:15px!important}
+.divider{height:1px;background:#F0F0F0;margin:12px 0}
+.bbar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #E8E8E8;padding:10px 14px;padding-bottom:calc(10px + env(safe-area-inset-bottom));z-index:200}
+.bbar-inner{max-width:480px;margin:0 auto}
+.cbtn{width:100%;height:54px;background:#1B5E20;color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit}
+.cbtn:active{transform:scale(0.98)}
+
+/* SLIDER */
+.slider-wrap{padding:4px 0 8px}
+.slider-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.slider-val{font-size:22px;font-weight:800;color:#1B5E20}
+.slider-unit{font-size:13px;color:#888}
+input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:6px;background:linear-gradient(to right,#1B5E20 var(--p,40%),#E0E0E0 var(--p,40%));outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;background:#1B5E20;box-shadow:0 2px 8px rgba(27,94,32,0.4);cursor:pointer}
+.slider-minmax{display:flex;justify-content:space-between;font-size:11px;color:#AAA;margin-top:4px}
+
+/* ANALISI AI */
+.ai-box{background:linear-gradient(135deg,#6B4FBB,#4A3490);border-radius:14px;padding:16px;margin-bottom:12px;color:#fff}
+.ai-title{font-size:14px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.ai-sub{font-size:12px;color:rgba(255,255,255,0.75);margin-bottom:12px;line-height:1.5}
+.ai-btn{width:100%;height:48px;background:rgba(255,255,255,0.2);color:#fff;border:1.5px solid rgba(255,255,255,0.4);border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.ai-btn:active{background:rgba(255,255,255,0.3)}
+.ai-btn:disabled{opacity:0.5;cursor:not-allowed}
+.ai-status{font-size:12px;color:rgba(255,255,255,0.8);margin-top:8px;text-align:center;min-height:18px}
+.ai-result{background:rgba(255,255,255,0.15);border-radius:10px;padding:12px;margin-top:10px;display:none}
+.ai-result-title{font-size:12px;font-weight:700;margin-bottom:8px;color:rgba(255,255,255,0.9)}
+.ai-field-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.1)}
+.ai-field-row:last-child{border-bottom:none}
+.ai-field-label{font-size:12px;color:rgba(255,255,255,0.75)}
+.ai-field-val{font-size:13px;font-weight:700;color:#fff}
+.ai-apply{width:100%;height:44px;background:#fff;color:#4A3490;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+
+/* UPLOAD */
+.upzone{border:2px dashed #A5D6A7;border-radius:14px;padding:22px;text-align:center;cursor:pointer;background:#F9FFF9;position:relative;margin-bottom:12px}
+.upzone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upzone .ui{font-size:40px;margin-bottom:6px}
+.upzone .ut{font-size:15px;font-weight:700;color:#1B5E20;margin-bottom:3px}
+.upzone .us{font-size:12px;color:#AAA}
+
+/* PDF viewer */
+.pdf-viewer{display:none;margin-bottom:12px;background:#2a2a2a;border-radius:14px;overflow:hidden}
+.pdf-toolbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#1a1a1a}
+.pdf-toolbar span{color:#fff;font-size:13px;font-weight:600}
+.pdf-pages{padding:10px;display:flex;flex-direction:column;gap:8px;max-height:450px;overflow-y:auto}
+.pdf-pages canvas{width:100%;border-radius:8px;display:block}
+.pdf-pages img{width:100%;border-radius:8px;display:block}
+
+/* GUIDE */
+.fsel{width:100%;height:50px;border-radius:10px;border:1.5px solid #DDD;background:#fff;color:#212121;font-size:15px;padding:0 14px;font-family:inherit;-webkit-appearance:none;margin-bottom:12px}
+.gcard{background:#fff;border-radius:14px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);display:none}
+.gcard.vis{display:block}
+.gcard-head{background:#1B5E20;padding:11px 15px;font-size:13px;font-weight:700;color:#fff}
+.gstep{display:flex;gap:11px;padding:13px 15px;border-bottom:1px solid #F5F5F5;align-items:flex-start}
+.gstep:last-child{border-bottom:none}
+.gnum{width:26px;height:26px;border-radius:50%;background:#1B5E20;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.gtitle{font-size:14px;font-weight:700;color:#212121;margin-bottom:3px}
+.gdesc{font-size:13px;color:#666;line-height:1.5}
+.ghl{display:inline-block;background:#FFF9C4;border:1px solid #F9A825;border-radius:6px;padding:3px 8px;font-size:13px;font-weight:700;color:#E65100;margin-top:5px}
+.gpath{font-size:11px;color:#AAA;margin-top:3px;font-style:italic}
+.gcta{display:none;gap:8px;flex-direction:column;margin-top:4px}
+.gcta.vis{display:flex}
+.gcta button{height:48px;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+.gcta .b1{background:#1B5E20;color:#fff}
+.gcta .b2{background:#455A64;color:#fff}
+
+/* RISULTATO */
+.rhero{margin:14px;border-radius:14px;padding:16px;border:1px solid}
+.rhero.ok{background:#E8F5E9;border-color:#A5D6A7}
+.rhero.ko{background:#FFEBEE;border-color:#FFCDD2}
+.rbadge{display:inline-block;font-size:11px;font-weight:800;padding:4px 12px;border-radius:20px;margin-bottom:8px}
+.rbadge.ok{background:#1B5E20;color:#fff}
+.rbadge.ko{background:#C62828;color:#fff}
+.rverdict{font-size:15px;font-weight:600;line-height:1.5;margin-bottom:14px}
+.rverdict.ok{color:#1B5E20}
+.rverdict.ko{color:#C62828}
+.crow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.cbox{background:rgba(255,255,255,0.85);border:1px solid rgba(0,0,0,0.07);border-radius:10px;padding:12px;text-align:center}
+.cbox .cw{font-size:11px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px}
+.cbox .cv{font-size:20px;font-weight:800;margin-bottom:1px}
+.cbox .cs{font-size:11px;color:#AAA}
+.cbox.att .cv{color:#1565C0}
+.cbox.nwg .cv{color:#1B5E20}
+.dstrip{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.7);border-radius:10px;padding:10px 14px;border:1px solid rgba(0,0,0,0.05)}
+.dv{font-size:15px;font-weight:800}
+.dv.ok{color:#2E7D32}
+.dv.ko{color:#C62828}
+.icard{margin:0 14px 14px;background:#E8F5E9;border:1px solid #A5D6A7;border-radius:14px;padding:15px}
+.ihead{font-size:14px;font-weight:700;color:#1B5E20;margin-bottom:12px}
+.inbox{background:#fff;border-radius:10px;padding:12px;text-align:center;margin-bottom:12px;border:1px solid #C8E6C9}
+.inbox .nb{font-size:44px;font-weight:800;color:#1B5E20;line-height:1}
+.inbox .nl{font-size:13px;color:#2E7D32;margin-top:4px}
+.itable{width:100%;border-collapse:collapse;font-size:13px}
+.itable th{font-size:11px;color:#2E7D32;font-weight:700;padding:5px 4px;text-align:center;border-bottom:1px solid #A5D6A7}
+.itable th:first-child{text-align:left}
+.itable td{padding:7px 4px;text-align:center;border-bottom:1px solid rgba(165,214,167,0.3)}
+.itable tr:last-child td{border-bottom:none}
+.itable td:first-child{text-align:left;color:#555}
+.itable .ok{color:#2E7D32;font-weight:700}
+.itable .ko{color:#C62828}
+.inote{font-size:11px;color:#2E7D32;margin-top:8px}
+.empty{text-align:center;padding:50px 20px;color:#AAA}
+.empty .ei{font-size:52px;margin-bottom:12px}
+.empty p{font-size:15px;line-height:1.7}
+.rname{font-size:12px;color:#AAA;margin:12px 14px 4px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+</style>
+</head>
+<body>
+
+<!-- PIN SCREEN -->
+<div class="pin-screen" id="pin-screen">
+  <div class="pin-logo"><span>NWG</span></div>
+  <div class="pin-title">Comparatore NWG</div>
+  <div class="pin-sub">Inserisci il PIN per accedere</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+  <div class="pin-grid">
+    <button class="pin-btn" onclick="pinPress('1')">1</button>
+    <button class="pin-btn" onclick="pinPress('2')">2</button>
+    <button class="pin-btn" onclick="pinPress('3')">3</button>
+    <button class="pin-btn" onclick="pinPress('4')">4</button>
+    <button class="pin-btn" onclick="pinPress('5')">5</button>
+    <button class="pin-btn" onclick="pinPress('6')">6</button>
+    <button class="pin-btn" onclick="pinPress('7')">7</button>
+    <button class="pin-btn" onclick="pinPress('8')">8</button>
+    <button class="pin-btn" onclick="pinPress('9')">9</button>
+    <button class="pin-btn" onclick="pinPress('')"></button>
+    <button class="pin-btn" onclick="pinPress('0')">0</button>
+    <button class="pin-btn del" onclick="pinDel()">⌫</button>
+  </div>
+  <div class="pin-err" id="pin-err"></div>
+</div>
+
+<!-- APP -->
+<div id="main-app" style="display:none">
+
+<div class="topbar">
+  <div class="logo"><span>NWG</span></div>
+  <div>
+    <div class="t1">Comparatore Luce Amica</div>
+    <div class="t2">NWG Energia S.p.A. SB</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="sw('guida')">📋 Guida</button>
+  <button class="tab" onclick="sw('dom')">⚡ Domestico</button>
+  <button class="tab" onclick="sw('au')">🏢 Altri Usi</button>
+  <button class="tab" onclick="sw('result')">📊 Risultato</button>
+</div>
+
+<div class="app">
+
+<!-- ══ GUIDA ══ -->
+<div id="tab-guida" class="tab-panel active">
+<div class="sect" style="padding-top:14px">
+
+  <!-- BOX AI -->
+  <div class="ai-box" id="ai-box">
+    <div class="ai-title">✨ Analisi automatica con AI</div>
+    <div class="ai-sub">Carica la bolletta qui sotto, poi premi il pulsante. Claude legge tutto e compila i campi da solo in 10 secondi.</div>
+    <button class="ai-btn" id="ai-btn" onclick="analizzaConAI()" disabled>
+      🤖 Analizza bolletta con Claude
+    </button>
+    <div class="ai-status" id="ai-status">Carica prima la bolletta ↓</div>
+    <div class="ai-result" id="ai-result">
+      <div class="ai-result-title">✅ Dati estratti dalla bolletta</div>
+      <div id="ai-fields"></div>
+      <button class="ai-apply" onclick="applicaDati()">Applica al comparatore →</button>
+    </div>
+  </div>
+
+  <div class="slabel">Bolletta del cliente</div>
+  <div class="upzone" id="upzone">
+    <input type="file" accept="application/pdf,image/*" onchange="loadFile(this)">
+    <div class="ui">📄</div>
+    <div class="ut">Tocca per caricare</div>
+    <div class="us">PDF o foto della bolletta</div>
+  </div>
+
+  <div class="pdf-viewer" id="pdf-viewer">
+    <div class="pdf-toolbar">
+      <span id="pdf-info">Bolletta caricata</span>
+      <button onclick="resetUpload()" style="background:#444;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px">✕ Rimuovi</button>
+    </div>
+    <div class="pdf-pages" id="pdf-pages"></div>
+  </div>
+
+  <div class="slabel" style="margin-top:4px">Oppure seleziona il fornitore per la guida manuale</div>
+  <select class="fsel" id="fsel" onchange="showGuida(this.value)">
+    <option value="">— Scegli fornitore —</option>
+    <option value="enel">Enel Energia</option>
+    <option value="hera">Hera Comm</option>
+    <option value="engie">ENGIE Italia</option>
+    <option value="sirio">Sirio Energia</option>
+    <option value="unoenergy">Unoenergy</option>
+    <option value="piuenergia">+Energia</option>
+    <option value="iren">Iren Energia</option>
+    <option value="a2a">A2A Energia</option>
+    <option value="edison">Edison Energia</option>
+    <option value="altro">Altro fornitore</option>
+  </select>
+
+  <div class="gcard vis" id="g-default">
+    <div class="gcard-head">📍 Dove guardare in qualsiasi bolletta</div>
+    <div class="gstep"><div class="gnum" style="background:#1565C0">①</div><div><div class="gtitle">Prezzo per consumo</div><div class="gdesc">Scontrino energia → riga "Quota per consumi" → colonna <strong>Prezzo medio €/kWh</strong></div></div></div>
+    <div class="gstep"><div class="gnum" style="background:#E65100">②</div><div><div class="gtitle">Quota fissa — solo VENDITA</div><div class="gdesc">Scontrino → riga "Quota fissa" → <strong>"di cui spesa per la vendita"</strong> €/mese</div></div></div>
+    <div class="gstep"><div class="gnum" style="background:#6A1B9A">③</div><div><div class="gtitle">Consumo annuo</div><div class="gdesc"><strong>"Consumo annuo"</strong> o "Informazioni storiche" → kWh su 12 mesi</div></div></div>
+    <div class="gstep"><div class="gnum" style="background:#2E7D32">④</div><div><div class="gtitle">Tipo tariffa</div><div class="gdesc">Box offerta → <strong>Monorario</strong> o <strong>Multiorario</strong> (F1/F2/F3)</div></div></div>
+  </div>
+
+  <div class="gcard" id="g-enel">
+    <div class="gcard-head">📋 Enel Energia</div>
+    <div class="gstep"><div class="gnum">①</div><div><div class="gtitle">Prezzo energia (€/kWh)</div><div class="gdesc">Scontrino → Quota consumi → <strong>Prezzo medio</strong></div><div class="ghl">Es: 0,141 €/kWh</div></div></div>
+    <div class="gstep"><div class="gnum">②</div><div><div class="gtitle">Quota fissa VENDITA (€/mese)</div><div class="gdesc">Scontrino → Quota fissa → <strong>"di cui spesa per la vendita"</strong></div><div class="ghl">Es: 15,84 €/mese</div></div></div>
+    <div class="gstep"><div class="gnum">③</div><div><div class="gtitle">Consumo annuo (kWh)</div><div class="gdesc"><strong>Informazioni storiche</strong> → Consumo annuo</div><div class="ghl">Es: 3.478 kWh</div></div></div>
+    <div class="gstep"><div class="gnum">④</div><div><div class="gtitle">Tipo tariffa</div><div class="gdesc">Box offerta → Tipologia prezzo</div><div class="ghl">MONO = Monorario | MULTI = Multiorario</div></div></div>
+  </div>
+
+  <div class="gcard" id="g-hera">
+    <div class="gcard-head">📋 Hera Comm</div>
+    <div class="gstep"><div class="gnum">①</div><div><div class="gtitle">Prezzo energia (€/kWh)</div><div class="gdesc">Scontrino → Quota per consumi → <strong>Prezzo medio</strong></div><div class="ghl">Es: 0,239 €/kWh</div><div class="gpath">Multiorario: Box offerta → Prezzo F1/F2/F3</div></div></div>
+    <div class="gstep"><div class="gnum">②</div><div><div class="gtitle">Quota fissa VENDITA (€/mese)</div><div class="gdesc">Scontrino → Quota fissa → <strong>"di cui spesa per la vendita"</strong></div><div class="ghl">Es: 12,50 €/mese</div></div></div>
+    <div class="gstep"><div class="gnum">③</div><div><div class="gtitle">Consumo annuo (kWh)</div><div class="gdesc"><strong>Elementi informativi essenziali</strong> → Consumo annuo aggiornato</div><div class="ghl">Es: 2.839 kWh</div></div></div>
+    <div class="gstep"><div class="gnum">④</div><div><div class="gtitle">Tipo tariffa</div><div class="gdesc">Box offerta → Tipologia di prezzo</div><div class="ghl">Fasce = Multiorario</div></div></div>
+  </div>
+
+  <div class="gcard" id="g-engie">
+    <div class="gcard-head">📋 ENGIE Italia</div>
+    <div class="gstep"><div class="gnum">①</div><div><div class="gtitle">Prezzo energia (€/kWh)</div><div class="gdesc">Scontrino → Quota consumi → <strong>Prezzo medio</strong></div><div class="ghl">Es: 0,187 €/kWh</div></div></div>
+    <div class="gstep"><div class="gnum">②</div><div><div class="gtitle">Quota fissa VENDITA (€/mese)</div><div class="gdesc">Scontrino → Quota fissa → <strong>"di cui vendita"</strong></div><div class="ghl">Es: 15,84 €/mese</div></div></div>
+    <div class="gstep"><div class="gnum">③</div><div><div class="gtitle">Consumo annuo (kWh)</div><div class="gdesc"><strong>Informazioni storiche</strong> pag.3 → Consumo annuo F1+F2+F3</div><div class="ghl">Es: 3.524 kWh</div></div></div>
+    <div class="gstep"><div class="gnum">④</div><div><div class="gtitle">Tipo tariffa</div><div class="gdesc">Box offerta → Tipologia di prezzo</div><div class="ghl">Per fasce = Multiorario</div></div></div>
+  </div>
+
+  <div class="gcard" id="g-sirio">
+    <div class="gcard-head">📋 Sirio Energia</div>
+    <div class="gstep"><div class="gnum">①</div><div><div class="gtitle">Prezzo energia (€/kWh)</div><div class="gdesc">Scontrino → Quota consumi → <strong>Prezzo medio</strong></div><div class="ghl">Es: 0,209 €/kWh</div><div class="gpath">⚠ Sirio usa (1+10%)×PUN — usa il prezzo medio dalla bolletta</div></div></div>
+    <div class="gstep"><div class="gnum">②</div><div><div class="gtitle">Quota fissa VENDITA (€/mese)</div><div class="gdesc">Scontrino → Quota fissa → <strong>"di cui vendita"</strong></div><div class="ghl">Es: 15,01 €/mese</div></div></div>
+    <div class="gstep"><div class="gnum">③</div><div><div class="gtitle">Consumo annuo (kWh)</div><div class="gdesc"><strong>Informazioni storiche</strong> → Consumo annuo aggiornato</div><div class="ghl">Es: 5.035 kWh</div></div></div>
+    <div class="gstep"><div class="gnum">④</div><div><div class="gtitle">Tipo tariffa</div><div class="gdesc">Box offerta → Tipologia di prezzo</div><div class="ghl">Per fasce F1/F2/F3 = Multiorario</div></div></div>
+  </div>
+
+  <div class="gcard" id="g-unoenergy">
+    <div class="gcard-head">📋 Unoenergy</div>
+    <div class="gstep"><div class="gnum">①</div><div><div class="gtitle">Prezzo energia (€/kWh)</div><div class="gdesc">Scontrino → Quota per consumi → <strong>Prezzo medio</strong></div><div class="ghl">Es: 0,225 €/kWh</div></div></div>
+    <div class="gstep"><div class="gnum">②</div><div><div class="gtitle">Quota fissa VENDITA (€/mese)</div><div class="gdesc">Scontrino → Quota fissa → <strong>"di cui vendita"</strong></div><div class="ghl">Es: 24,48 €/mese</div></div></div>
+    <div class="gstep"><div class="gnum">③</div><div><div class="gtitle">Consumo annuo (kWh)</div><div class="gdesc">Prima pagina o Informazioni storiche → Consumo annuo</div><div class="ghl">Es: 3.917 kWh</div></div></div>
+    <div class="gstep"><div class="gnum">④</div><div><div class="gtitle">Tipo tariffa</div><div class="gdesc">Box offerta → Tipologia di prezzo</div><div class="ghl">PER FASCE = Multiorario</div></div></div>
+  </div>
+
+  <div class="gcard" id="g-piuenergia">
+    <div class="gcard-head">📋 +Energia</div>
+    <div class="gstep"><div class="gnum">①</div><div><div class="gtitle">Prezzo energia (€/kWh)</div><div class="gdesc">Scontrino → Quota per consumi → <strong>Prezzo medio</strong></div><div class="ghl">Es: 0,199 €/kWh</div></div></div>
+    <div class="gstep"><div class="gnum">②</div><div><div class="gtitle">Quota fissa VENDITA (€/mese)</div><div class="gdesc">Scontrino → Quota fissa → <strong>"di cui vendita"</strong></div><div class="ghl">Es: 7,65 €/mese</div></div></div>
+    <div class="gstep"><div class="gnum">③</div><div><div class="gtitle">Consumo annuo (kWh)</div><div class="gdesc"><strong>Informazioni storiche</strong> → Consumo annuo F1+F2+F3</div><div class="ghl">Es: 728 kWh</div></div></div>
+    <div class="gstep"><div class="gnum">④</div><div><div class="gtitle">Tipo tariffa</div><div class="gdesc">Box offerta → Tipologia di prezzo</div><div class="ghl">Per fasce = Multiorario</div></div></div>
+  </div>
+
+  <div class="gcard" id="g-iren">
+    <div class="gcard-head">📋 Iren Energia</div>
+    <div class="gstep"><div class="gnum">①</div><div><div class="gtitle">Prezzo energia (€/kWh)</div><div class="gdesc">Scontrino → Quota per consumi → <strong>Prezzo medio</strong></div><div class="ghl">Es: 0,205 €/kWh</div></div></div>
+    <div class="gstep"><div class="gnum">②</div><div><div class="gtitle">Quota fissa VENDITA (€/mese)</div><div class="gdesc">Scontrino → Quota fissa → <strong>"di cui vendita"</strong></div><div class="ghl">Es: 13,25 €/mese</div></div></div>
+    <div class="gstep"><div class="gnum">③</div><div><div class="gtitle">Consumo annuo (kWh)</div><div class="gdesc"><strong>Informazioni storiche</strong> → Consumo annuo aggiornato</div><div class="ghl">Es: 3.200 kWh</div></div></div>
+    <div class="gstep"><div class="gnum">④</div><div><div class="gtitle">Tipo tariffa</div><div class="gdesc">Box offerta → Tipologia prezzo</div><div class="ghl">Fasce = Multiorario</div></div></div>
+  </div>
+
+  <div class="gcard" id="g-a2a">
+    <div class="gcard-head">📋 A2A Energia</div>
+    <div class="gstep"><div class="gnum">①</div><div><div class="gtitle">Prezzo energia (€/kWh)</div><div class="gdesc">Scontrino → Quota per consumi → <strong>Prezzo medio</strong></div><div class="ghl">Es: 0,131 €/kWh</div></div></div>
+    <div class="gstep"><div class="gnum">②</div><div><div class="gtitle">Quota fissa VENDITA (€/mese)</div><div class="gdesc">Scontrino → Quota fissa → <strong>"di cui vendita"</strong></div><div class="ghl">Es: 12,50 €/mese</div></div></div>
+    <div class="gstep"><div class="gnum">③</div><div><div class="gtitle">Consumo annuo (kWh)</div><div class="gdesc"><strong>Informazioni storiche</strong> → Consumo annuo</div><div class="ghl">Es: 2.500 kWh</div></div></div>
+    <div class="gstep"><div class="gnum">④</div><div><div class="gtitle">Tipo tariffa</div><div class="gdesc">Box offerta → Tipologia prezzo</div><div class="ghl">Monorario o Fasce</div></div></div>
+  </div>
+
+  <div class="gcard" id="g-edison">
+    <div class="gcard-head">📋 Edison Energia</div>
+    <div class="gstep"><div class="gnum">①</div><div><div class="gtitle">Prezzo energia (€/kWh)</div><div class="gdesc">Scontrino → Quota per consumi → <strong>Prezzo medio</strong></div><div class="ghl">Es: 0,139 €/kWh</div></div></div>
+    <div class="gstep"><div class="gnum">②</div><div><div class="gtitle">Quota fissa VENDITA (€/mese)</div><div class="gdesc">Scontrino → Quota fissa → <strong>"di cui vendita"</strong></div><div class="ghl">Es: 6,00 €/mese</div></div></div>
+    <div class="gstep"><div class="gnum">③</div><div><div class="gtitle">Consumo annuo (kWh)</div><div class="gdesc"><strong>Informazioni storiche</strong> → Consumo annuo</div><div class="ghl">Es: 2.800 kWh</div></div></div>
+    <div class="gstep"><div class="gnum">④</div><div><div class="gtitle">Tipo tariffa</div><div class="gdesc">Box offerta → Tipologia prezzo</div><div class="ghl">Fasce = Multiorario</div></div></div>
+  </div>
+
+  <div class="gcard" id="g-altro">
+    <div class="gcard-head">📋 Guida generica</div>
+    <div class="gstep"><div class="gnum">①</div><div><div class="gtitle">Prezzo energia (€/kWh)</div><div class="gdesc">Scontrino → Quota per consumi → <strong>Prezzo medio €/kWh</strong></div></div></div>
+    <div class="gstep"><div class="gnum">②</div><div><div class="gtitle">Quota fissa VENDITA (€/mese)</div><div class="gdesc">Quota fissa → <strong>"di cui spesa per la vendita"</strong> — NON rete</div></div></div>
+    <div class="gstep"><div class="gnum">③</div><div><div class="gtitle">Consumo annuo (kWh)</div><div class="gdesc"><strong>"Consumo annuo"</strong> o "Informazioni storiche" — 12 mesi</div></div></div>
+    <div class="gstep"><div class="gnum">④</div><div><div class="gtitle">Tipo tariffa</div><div class="gdesc">Monorario (prezzo unico) o Fasce/Multi (F1/F2/F3)</div></div></div>
+  </div>
+
+  <div class="gcta" id="gcta">
+    <button class="b1" onclick="sw('dom')">⚡ Vai a Domestico</button>
+    <button class="b2" onclick="sw('au')">🏢 Vai ad Altri Usi</button>
+  </div>
+</div>
+</div>
+
+<!-- ══ DOMESTICO ══ -->
+<div id="tab-dom" class="tab-panel">
+<div class="sect" style="padding-top:14px">
+  <div class="slabel">Tipo di tariffa</div>
+  <div class="tipo-row">
+    <button class="tipo-btn active" id="dm-btn" onclick="st('dom','mono')">Monorario</button>
+    <button class="tipo-btn" id="dM-btn" onclick="st('dom','multi')">Multiorario F1/F2/F3</button>
+  </div>
+  <div class="slabel">Cliente</div>
+  <div class="card">
+    <div class="field"><label>Nome cliente</label><input type="text" id="d-nome" placeholder="Es: Mario Rossi"></div>
+    <div class="field" style="margin-bottom:0"><label>Fornitore attuale</label><input type="text" id="d-forn" placeholder="Es: Enel, Hera…"></div>
+  </div>
+  <div class="slabel">Dati dalla bolletta</div>
+  <div class="card">
+    <div id="d-mono">
+      <div class="field"><label>① Prezzo per consumo (€/kWh)</label><input type="number" id="d-pm" placeholder="Es: 0.2349" step="0.0001" inputmode="decimal"><div class="hint">📄 Scontrino → Quota consumi → Prezzo medio</div></div>
+      <div class="divider"></div>
+      <div class="field"><label>③ Consumo annuo (kWh)</label><input type="number" id="d-km" placeholder="Es: 3500" inputmode="numeric"><div class="hint">📄 Consumo annuo o Informazioni storiche</div></div>
+    </div>
+    <div id="d-multi" style="display:none">
+      <div class="field"><label>① Prezzo per fascia (€/kWh)</label><div class="fg"><div class="field"><label>F1</label><input type="number" id="d-pf1" placeholder="0.000" step="0.0001" inputmode="decimal"></div><div class="field"><label>F2</label><input type="number" id="d-pf2" placeholder="0.000" step="0.0001" inputmode="decimal"></div><div class="field"><label>F3</label><input type="number" id="d-pf3" placeholder="0.000" step="0.0001" inputmode="decimal"></div></div><div class="hint">📄 Box Offerta → Prezzo F1 / F2 / F3</div></div>
+      <div class="divider"></div>
+      <div class="field"><label>③ Consumo annuo per fascia (kWh)</label><div class="fg"><div class="field"><label>F1</label><input type="number" id="d-kf1" placeholder="0" inputmode="numeric"></div><div class="field"><label>F2</label><input type="number" id="d-kf2" placeholder="0" inputmode="numeric"></div><div class="field"><label>F3</label><input type="number" id="d-kf3" placeholder="0" inputmode="numeric"></div></div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="field" style="margin-bottom:0"><label>② Quota fissa mensile — solo VENDITA (€/mese)</label><input type="number" id="d-qf" placeholder="Es: 15.84" step="0.01" inputmode="decimal"><div class="hint">📄 Quota fissa → "di cui spesa per la VENDITA"</div></div>
+  </div>
+  <div class="slabel">Influencer Green — consumo amico</div>
+  <div class="card">
+    <div class="slider-wrap">
+      <div class="slider-row"><span class="slider-val" id="d-sv">2.700</span><span class="slider-unit">kWh/anno</span></div>
+      <input type="range" id="d-sl" min="1000" max="5000" step="100" value="2700" oninput="upd('d')">
+      <div class="slider-minmax"><span>1.000 kWh</span><span>5.000 kWh</span></div>
+    </div>
+    <div class="hint" style="margin-top:4px">Stima consumo annuo di ogni amico che segnalerai</div>
+  </div>
+</div>
+</div>
+
+<!-- ══ ALTRI USI ══ -->
+<div id="tab-au" class="tab-panel">
+<div class="sect" style="padding-top:14px">
+  <div class="slabel">Tipo di tariffa</div>
+  <div class="tipo-row">
+    <button class="tipo-btn active" id="am-btn" onclick="st('au','mono')">Monorario</button>
+    <button class="tipo-btn" id="aM-btn" onclick="st('au','multi')">Multiorario F1/F2/F3</button>
+  </div>
+  <div class="slabel">Cliente</div>
+  <div class="card">
+    <div class="field"><label>Nome cliente / condominio</label><input type="text" id="a-nome" placeholder="Es: Cond. Via Roma 14"></div>
+    <div class="field" style="margin-bottom:0"><label>Fornitore attuale</label><input type="text" id="a-forn" placeholder="Es: Hera, Unoenergy…"></div>
+  </div>
+  <div class="slabel">Dati dalla bolletta</div>
+  <div class="card">
+    <div id="a-mono">
+      <div class="field"><label>① Prezzo per consumo (€/kWh)</label><input type="number" id="a-pm" placeholder="Es: 0.1869" step="0.0001" inputmode="decimal"><div class="hint">📄 Scontrino → Quota consumi → Prezzo medio</div></div>
+      <div class="divider"></div>
+      <div class="field"><label>③ Consumo annuo (kWh)</label><input type="number" id="a-km" placeholder="Es: 5000" inputmode="numeric"><div class="hint">📄 Consumo annuo o Informazioni storiche</div></div>
+    </div>
+    <div id="a-multi" style="display:none">
+      <div class="field"><label>① Prezzo per fascia (€/kWh)</label><div class="fg"><div class="field"><label>F1</label><input type="number" id="a-pf1" placeholder="0.000" step="0.0001" inputmode="decimal"></div><div class="field"><label>F2</label><input type="number" id="a-pf2" placeholder="0.000" step="0.0001" inputmode="decimal"></div><div class="field"><label>F3</label><input type="number" id="a-pf3" placeholder="0.000" step="0.0001" inputmode="decimal"></div></div><div class="hint">📄 Box Offerta → Prezzo F1 / F2 / F3</div></div>
+      <div class="divider"></div>
+      <div class="field"><label>③ Consumo annuo per fascia (kWh)</label><div class="fg"><div class="field"><label>F1</label><input type="number" id="a-kf1" placeholder="0" inputmode="numeric"></div><div class="field"><label>F2</label><input type="number" id="a-kf2" placeholder="0" inputmode="numeric"></div><div class="field"><label>F3</label><input type="number" id="a-kf3" placeholder="0" inputmode="numeric"></div></div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="field" style="margin-bottom:0"><label>② Quota fissa mensile — solo VENDITA (€/mese)</label><input type="number" id="a-qf" placeholder="Es: 12.50" step="0.01" inputmode="decimal"><div class="hint">📄 Quota fissa → "di cui spesa per la VENDITA"</div></div>
+  </div>
+  <div class="slabel">Influencer Green — consumo POD/amico</div>
+  <div class="card">
+    <div class="slider-wrap">
+      <div class="slider-row"><span class="slider-val" id="a-sv">3.000</span><span class="slider-unit">kWh/anno</span></div>
+      <input type="range" id="a-sl" min="1000" max="5000" step="100" value="3000" oninput="upd('a')">
+      <div class="slider-minmax"><span>1.000 kWh</span><span>5.000 kWh</span></div>
+    </div>
+    <div class="hint" style="margin-top:4px">Stima consumo annuo di ogni POD o amico che segnalerai</div>
+  </div>
+</div>
+</div>
+
+<!-- ══ RISULTATO ══ -->
+<div id="tab-result" class="tab-panel">
+  <div id="res-empty"><div class="empty"><div class="ei">📊</div><p>Compila i dati nel tab<br><strong>Domestico</strong> o <strong>Altri Usi</strong><br>poi premi <strong>Calcola</strong>.</p></div></div>
+  <div id="res-content" style="display:none">
+    <div id="res-name" class="rname"></div>
+    <div id="res-hero"></div>
+    <div id="res-inf"></div>
+  </div>
+</div>
+
+</div><!-- app -->
+<div class="bbar"><div class="bbar-inner"><button class="cbtn" onclick="calc()">Calcola confronto</button></div></div>
+</div><!-- main-app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+// ── PIN ──────────────────────────────────────────────────────────────────────
+var PIN = '1974';
+var pinInput = '';
+
+function pinPress(n){
+  if(!n) return;
+  if(pinInput.length >= 4) return;
+  pinInput += n;
+  updateDots();
+  if(pinInput.length === 4){
+    setTimeout(checkPin, 150);
+  }
+}
+
+function pinDel(){
+  pinInput = pinInput.slice(0,-1);
+  updateDots();
+  document.getElementById('pin-err').textContent = '';
+}
+
+function updateDots(){
+  for(var i=0;i<4;i++){
+    document.getElementById('d'+i).classList.toggle('filled', i < pinInput.length);
+  }
+}
+
+function checkPin(){
+  if(pinInput === PIN){
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+  } else {
+    document.getElementById('pin-err').textContent = 'PIN errato, riprova';
+    pinInput = '';
+    updateDots();
+  }
+}
+
+// ── APP ──────────────────────────────────────────────────────────────────────
+if(typeof pdfjsLib !== 'undefined'){
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+var tipo={dom:'mono',au:'mono'};
+var lastTab='dom';
+var currentFileData=null;
+var currentMediaType=null;
+var aiDati=null;
+
+function sw(t){
+  var tabs=['guida','dom','au','result'];
+  document.querySelectorAll('.tab').forEach(function(b,i){b.classList.toggle('active',tabs[i]===t)});
+  document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active')});
+  document.getElementById('tab-'+t).classList.add('active');
+  if(t!=='result') lastTab=t;
+}
+
+function st(tab,tp){
+  tipo[tab]=tp;
+  var p=tab==='dom'?'d':'a';
+  document.getElementById(p+'m-btn').classList.toggle('active',tp==='mono');
+  document.getElementById(p+'M-btn').classList.toggle('active',tp==='multi');
+  document.getElementById(p+'-mono').style.display=tp==='mono'?'':'none';
+  document.getElementById(p+'-multi').style.display=tp==='multi'?'':'none';
+}
+
+function upd(p){
+  var sl=document.getElementById(p+'-sl');
+  var v=parseInt(sl.value);
+  document.getElementById(p+'-sv').textContent=v.toLocaleString('it-IT');
+  var pct=((v-1000)/(5000-1000)*100).toFixed(1);
+  sl.style.setProperty('--p',pct+'%');
+}
+upd('d'); upd('a');
+
+function resetUpload(){
+  document.getElementById('upzone').style.display='block';
+  document.getElementById('pdf-viewer').style.display='none';
+  document.getElementById('pdf-pages').innerHTML='';
+  document.getElementById('ai-btn').disabled=true;
+  document.getElementById('ai-status').textContent='Carica prima la bolletta ↓';
+  document.getElementById('ai-result').style.display='none';
+  currentFileData=null; currentMediaType=null; aiDati=null;
+}
+
+function loadFile(inp){
+  var f=inp.files[0];
+  if(!f) return;
+  document.getElementById('upzone').style.display='none';
+  document.getElementById('pdf-viewer').style.display='block';
+  var pages=document.getElementById('pdf-pages');
+  pages.innerHTML='<div style="padding:20px;text-align:center;color:#AAA;font-size:14px">⏳ Caricamento…</div>';
+  document.getElementById('pdf-info').textContent=f.name;
+
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var ab=e.target.result;
+    if(f.type.startsWith('image/')){
+      currentMediaType=f.type;
+      var b64=btoa(String.fromCharCode.apply(null,new Uint8Array(ab)));
+      currentFileData=b64;
+      var url=URL.createObjectURL(f);
+      pages.innerHTML='';
+      var img=document.createElement('img');
+      img.src=url;
+      img.style.cssText='width:100%;border-radius:8px;display:block';
+      pages.appendChild(img);
+      enableAI();
+    } else {
+      // PDF
+      currentMediaType='image/jpeg';
+      var uint=new Uint8Array(ab);
+      pdfjsLib.getDocument({data:uint}).promise.then(function(pdf){
+        document.getElementById('pdf-info').textContent=f.name+' — '+pdf.numPages+' pagine';
+        pages.innerHTML='';
+        var renders=[];
+        for(var i=1;i<=pdf.numPages;i++) renders.push(i);
+        var chain=Promise.resolve();
+        renders.forEach(function(n){
+          chain=chain.then(function(){
+            return pdf.getPage(n).then(function(page){
+              var vp=page.getViewport({scale:1.8});
+              var canvas=document.createElement('canvas');
+              canvas.height=vp.height; canvas.width=vp.width;
+              return page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise.then(function(){
+                pages.appendChild(canvas);
+              });
+            });
+          });
+        });
+        chain.then(function(){
+          // Usa prima pagina come immagine per AI
+          var firstCanvas=pages.querySelector('canvas');
+          if(firstCanvas){
+            currentFileData=firstCanvas.toDataURL('image/jpeg',0.85).split(',')[1];
+            enableAI();
+          }
+        });
+      }).catch(function(){
+        pages.innerHTML='<div style="padding:20px;text-align:center;color:#FF6B6B;font-size:14px">❌ Errore PDF. Prova con una foto.</div>';
+      });
+    }
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+function enableAI(){
+  document.getElementById('ai-btn').disabled=false;
+  document.getElementById('ai-status').textContent='Pronto! Premi il pulsante per analizzare.';
+}
+
+async function analizzaConAI(){
+  if(!currentFileData){ return; }
+  var btn=document.getElementById('ai-btn');
+  var status=document.getElementById('ai-status');
+  btn.disabled=true;
+  btn.textContent='⏳ Analisi in corso…';
+  status.textContent='Claude sta leggendo la bolletta…';
+  document.getElementById('ai-result').style.display='none';
+
+  try {
+    var resp=await fetch('/.netlify/functions/analizza',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image:currentFileData, mediaType:currentMediaType||'image/jpeg'})
+    });
+    var data=await resp.json();
+    if(data.error){
+      status.textContent='❌ Errore: '+data.error;
+      btn.disabled=false;
+      btn.innerHTML='🤖 Analizza bolletta con Claude';
+      return;
+    }
+    aiDati=data;
+    mostraRisultatiAI(data);
+    status.textContent='✅ Analisi completata!';
+  } catch(e){
+    status.textContent='❌ Errore di connessione. Riprova.';
+  }
+  btn.disabled=false;
+  btn.innerHTML='🤖 Analizza bolletta con Claude';
+}
+
+function mostraRisultatiAI(d){
+  var html='';
+  var fields=[
+    ['Fornitore', d.fornitore||'—'],
+    ['Tipo tariffa', d.tipo_tariffa||'—'],
+    ['Tipologia', d.tipologia||'—'],
+    ['Prezzo consumo', d.tipo_tariffa==='MULTIORARIO'?'F1:'+d.prezzo_f1+' F2:'+d.prezzo_f2+' F3:'+d.prezzo_f3 : (d.prezzo_mono||0)+' €/kWh'],
+    ['Quota fissa vendita', (d.quota_fissa||0)+' €/mese'],
+    ['Consumo annuo', d.tipo_tariffa==='MULTIORARIO'?(d.consumo_f1||0)+' + '+(d.consumo_f2||0)+' + '+(d.consumo_f3||0)+' kWh':(d.consumo_annuo||0)+' kWh'],
+  ];
+  fields.forEach(function(f){
+    html+='<div class="ai-field-row"><span class="ai-field-label">'+f[0]+'</span><span class="ai-field-val">'+f[1]+'</span></div>';
+  });
+  document.getElementById('ai-fields').innerHTML=html;
+  document.getElementById('ai-result').style.display='block';
+}
+
+function applicaDati(){
+  if(!aiDati) return;
+  var d=aiDati;
+  var isDom=(d.tipologia||'DOMESTICO')==='DOMESTICO';
+  var tab=isDom?'dom':'au';
+  var pr=isDom?'d':'a';
+  sw(tab);
+
+  // Imposta tipo tariffa
+  var tp=(d.tipo_tariffa||'MONORARIO')==='MULTIORARIO'?'multi':'mono';
+  st(tab, tp);
+
+  // Compila fornitore
+  if(d.fornitore) document.getElementById(pr+'-forn').value=d.fornitore;
+
+  if(tp==='mono'){
+    if(d.prezzo_mono) document.getElementById(pr+'-pm').value=d.prezzo_mono;
+    if(d.consumo_annuo) document.getElementById(pr+'-km').value=d.consumo_annuo;
+  } else {
+    if(d.prezzo_f1) document.getElementById(pr+'-pf1').value=d.prezzo_f1;
+    if(d.prezzo_f2) document.getElementById(pr+'-pf2').value=d.prezzo_f2;
+    if(d.prezzo_f3) document.getElementById(pr+'-pf3').value=d.prezzo_f3;
+    if(d.consumo_f1) document.getElementById(pr+'-kf1').value=d.consumo_f1;
+    if(d.consumo_f2) document.getElementById(pr+'-kf2').value=d.consumo_f2;
+    if(d.consumo_f3) document.getElementById(pr+'-kf3').value=d.consumo_f3;
+  }
+  if(d.quota_fissa) document.getElementById(pr+'-qf').value=d.quota_fissa;
+}
+
+function showGuida(val){
+  document.querySelectorAll('.gcard').forEach(function(c){c.classList.remove('vis')});
+  document.getElementById('gcta').classList.remove('vis');
+  if(!val){document.getElementById('g-default').classList.add('vis');return;}
+  var c=document.getElementById('g-'+val);
+  if(c){c.classList.add('vis');document.getElementById('gcta').classList.add('vis');}
+}
+
+function g(id){return parseFloat(document.getElementById(id).value)||0;}
+function gs(id){return document.getElementById(id).value.trim();}
+function fmt(n){return n.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+function calc(){
+  var tab=lastTab;
+  var isDom=tab==='dom';
+  var tp=tipo[tab];
+  var pr=isDom?'d':'a';
+  var nome=gs(pr+'-nome')||(isDom?'Cliente domestico':'Condominio/Azienda');
+  var forn=gs(pr+'-forn')||'Fornitore attuale';
+  var qf=g(pr+'-qf');
+  var amico=parseInt(document.getElementById(pr+'-sl').value)||(isDom?2700:3000);
+  var nwg_ccv=isDom?144.32:143.00;
+  var att_en=0,nwg_en=0;
+
+  if(tp==='mono'){
+    var p=g(pr+'-pm'),k=g(pr+'-km');
+    att_en=p*k;
+    nwg_en=isDom?Math.max(0,(p-0.05)*1.1+0.034)*k:Math.max(0,(p-0.05)*1.23-0.0397+0.0803+0.02167+0.0199)*k;
+  } else {
+    var pf1=g(pr+'-pf1'),pf2=g(pr+'-pf2'),pf3=g(pr+'-pf3');
+    var kf1=g(pr+'-kf1'),kf2=g(pr+'-kf2'),kf3=g(pr+'-kf3');
+    att_en=pf1*kf1+pf2*kf2+pf3*kf3;
+    if(isDom){
+      nwg_en=Math.max(0,(pf1-0.05)*1.1+0.034)*kf1+Math.max(0,(pf2-0.05)*1.1+0.034)*kf2+Math.max(0,(pf3-0.05)*1.1+0.034)*kf3;
+    } else {
+      nwg_en=Math.max(0,(pf1-0.05)*1.23-0.0397+0.0803+0.02167+0.0199)*kf1+Math.max(0,(pf2-0.05)*1.23-0.0397+0.0759+0.02167+0.0199)*kf2+Math.max(0,(pf3-0.05)*1.23-0.0397+0.0627+0.02167+0.0199)*kf3;
+    }
+  }
+
+  var att=att_en+qf*12;
+  var nwg=nwg_en+nwg_ccv;
+  var diff=nwg-att;
+  var ok=diff<0;
+  var dm=diff/12;
+
+  document.getElementById('res-name').textContent=nome+' · '+(isDom?'Domestico':'Altri Usi')+' · '+tp;
+  document.getElementById('res-hero').innerHTML=
+    '<div class="rhero '+(ok?'ok':'ko')+'">'
+    +'<span class="rbadge '+(ok?'ok':'ko')+'">'+(ok?'✅ NWG CONVIENE':'❌ NWG COSTA DI PIÙ')+'</span>'
+    +'<div class="rverdict '+(ok?'ok':'ko')+'">'+(ok?'Risparmio di ':'Maggior costo di ')+'<strong>'+fmt(Math.abs(diff))+' €/anno</strong><br>('+fmt(Math.abs(dm))+' €/mese) rispetto a '+forn+'</div>'
+    +'<div class="crow">'
+    +'<div class="cbox att"><div class="cw">'+forn+'</div><div class="cv">'+fmt(att)+' €</div><div class="cs">all\'anno</div></div>'
+    +'<div class="cbox nwg"><div class="cw">NWG Luce Amica</div><div class="cv">'+fmt(nwg)+' €</div><div class="cs">all\'anno</div></div>'
+    +'</div>'
+    +'<div class="dstrip"><div style="font-size:20px">'+(ok?'📉':'📈')+'</div><div style="font-size:13px;color:#616161;flex:1">Differenza mensile</div>'
+    +'<div class="dv '+(ok?'ok':'ko')+'">'+(ok?'-':'+')+fmt(Math.abs(dm))+' €</div></div></div>';
+
+  var mc=Math.max(0,diff);
+  var sa=0.01*amico;
+  var nm=sa>0?Math.ceil(mc/sa):0;
+  var rows='';
+  for(var n=1;n<=8;n++){
+    var sc=n*sa,sl=sc-mc,bok=sl>=0;
+    rows+='<tr><td>'+(n===1?'1 amico':n+' amici')+'</td><td>'+fmt(sc)+' €</td><td>'+fmt(mc)+' €</td><td class="'+(bok?'ok':'ko')+'">'+(bok?'+':'')+fmt(sl)+' €</td></tr>';
+  }
+  document.getElementById('res-inf').innerHTML=
+    '<div class="icard"><div class="ihead">👥 Influencer Green — '+amico.toLocaleString('it-IT')+' kWh/amico</div>'
+    +(mc===0?'<div style="text-align:center;padding:12px;color:#2E7D32;font-size:14px;line-height:1.6">✅ NWG conviene già.<br>Ogni amico in più è risparmio aggiuntivo.</div>'
+    :'<div class="inbox"><div class="nb">'+nm+'</div><div class="nl">'+(nm===1?'amico':'amici')+' per pareggiare</div></div>'
+    +'<table class="itable"><thead><tr><th>N°</th><th>Sconto</th><th>Costo +</th><th>Saldo</th></tr></thead><tbody>'+rows+'</tbody></table>'
+    +'<div class="inote">Acceleratore: 0,01 €/kWh × '+amico.toLocaleString('it-IT')+' kWh</div>')
+    +'</div>';
+
+  document.getElementById('res-empty').style.display='none';
+  document.getElementById('res-content').style.display='block';
+  sw('result');
+}
+</script>
+</body>
+</html>
